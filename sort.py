@@ -23,7 +23,7 @@ def normalize_file(file): # функція нормалізує ім'я файл
     return normalize(re.sub(extension, '', title)) + extension
 
 
-def moving_files(file): # функція переміщює файли до відповідної категорії
+def moving_files(file, FOLDERS): # функція переміщює файли до відповідної категорії
     TYPES = {
         'imeges': ['JPEG', 'PNG', 'JPG', 'SVG'],
         'video': ['AVI', 'MP4', 'MOV','MKV'],
@@ -31,7 +31,6 @@ def moving_files(file): # функція переміщює файли до ві
         'audio': ['MP3', 'OGG', 'WAV', 'AMR'],
         'archives': ['ZIP', 'GZ', 'TAR']
         }
-    global FOLDERS
     cut_out = False
     for key, values in TYPES.items():
         for val in values:
@@ -44,22 +43,19 @@ def moving_files(file): # функція переміщює файли до ві
         file.replace(FOLDERS / 'other' / normalize_file(file))
            
 
-def overrun_folder(folder): # функція розпаковую папки
+def overrun_folder(folder, FOLDERS): # функція розпаковую папки
     for file in folder.iterdir():
         if file.is_dir():
-            overrun_folder(file)
+            overrun_folder(file, FOLDERS)
             try:
                 file.rmdir()
             except OSError:
                 print (f'The directory "{file}" is not empty')
         else:
-            moving_files(file)
+            moving_files(file, FOLDERS)
 
 
-if sys.argv[1]:
-    FOLDERS = Path(sys.argv[1])
-    overrun_folder(FOLDERS) 
-    print(f'Start in folder {FOLDERS}')
+def unpack(FOLDERS): # функція розпакує архіви, якщо вони є
     try:
         if FOLDERS / 'archives': 
             for archive in (FOLDERS / 'archives').iterdir():
@@ -69,4 +65,20 @@ if sys.argv[1]:
                 shutil.unpack_archive(archive, new_way, format=None)
     except FileNotFoundError:
         print('There are no archives in the folder')
+
+
+def sort():
+    try:
+        if sys.argv[1]:
+            FOLDERS = Path(sys.argv[1])
+            overrun_folder(FOLDERS, FOLDERS) 
+            unpack(FOLDERS)
+            print(f'Start in folder {FOLDERS}')
+    except IndexError:
+        print('You did not specify a folder' )
+
+if __name__ == '__main__':
+    sort()
+
+
 
